@@ -3,8 +3,10 @@ title: "Paddle 源码阅读"
 ---
 
 ## 安装Paddle
+
 ### 下载paddle镜像 
 	docker pull paddledev/paddle:cpu-demo-latest
+
 ### 启动Paddle容器 
 	docker run -it paddledev/paddle:cpu-demo-latest
 	cd /root/paddle

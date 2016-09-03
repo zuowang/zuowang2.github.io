@@ -104,13 +104,17 @@
     <h1>Paddle 源码阅读</h1>
 
 <h2 id="paddle">安装Paddle</h2>
+
 <h3 id="paddle-1">下载paddle镜像</h3>
-<pre><code>docker pull paddledev/paddle:cpu-demo-latest ### 启动Paddle容器 
-docker run -it paddledev/paddle:cpu-demo-latest
+<pre><code>docker pull paddledev/paddle:cpu-demo-latest
+</code></pre>
+
+<h3 id="paddle-2">启动Paddle容器</h3>
+<pre><code>docker run -it paddledev/paddle:cpu-demo-latest
 cd /root/paddle
 </code></pre>
 
-<h2 id="paddle-2">单机运行Paddle</h2>
+<h2 id="paddle-3">单机运行Paddle</h2>
 
 <pre><code>cd demo/recommendation
 sh run.sh
@@ -146,7 +150,7 @@ ssh-keygen -t rsa
 
 <p>把两个容器的key加入到~/.ssh/authorized_keys</p>
 
-<h3 id="paddle-3">启动分布式paddle</h3>
+<h3 id="paddle-4">启动分布式paddle</h3>
 <pre><code>cd paddle/scripts/cluster_train 修改conf.py
 
 HOSTS = [

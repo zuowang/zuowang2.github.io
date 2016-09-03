@@ -2,21 +2,21 @@
 title: "Paddle 源码阅读"
 ---
 
-## 安装Paddle ##
-### 下载paddle镜像 ###
+## 安装Paddle
+### 下载paddle镜像 
 	docker pull paddledev/paddle:cpu-demo-latest
-### 启动Paddle容器 ###
+### 启动Paddle容器 
 	docker run -it paddledev/paddle:cpu-demo-latest
 	cd /root/paddle
 
 
 
-## 单机运行Paddle ##
+## 单机运行Paddle 
 
 	cd demo/recommendation
 	sh run.sh
 
-## Debug paddle ##
+## Debug paddle 
 执行下面命令
 
 	export DEBUGGER="gdb --args"
@@ -27,7 +27,7 @@ title: "Paddle 源码阅读"
 
 分布式运行可以去节点上通过gdb --pid命令debug
 
-## 分布式运行 ##
+## 分布式运行 
 ### 准备环境 ###
 安装sshd:
 

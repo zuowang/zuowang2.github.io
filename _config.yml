@@ -24,7 +24,7 @@ defaults:
     values:
       layout: plain
 
-markdown: KramdownPygments
+markdown: kramdown
 highlighter: pygments
 
 kramdown:

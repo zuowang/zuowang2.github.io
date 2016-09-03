@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Zuo.Blog Documentation: Paddle 源码阅读</title>
+    <link rel="shortcut icon" href="/page/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/page/favicon.ico" type="image/x-icon">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/page/css/sweeper.css">
+    <link rel="stylesheet" href="/page/css/syntax.css">
+    <link rel="stylesheet" href="/page/css/codetabs.css">
+    
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>  
+    
+    
+
+
+    <!-- Top navbar. -->
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <!-- The logo. -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <div class="navbar-logo">
+            <a href="/"><img alt="Zuo's Blog" src="/page/img/zuo-blog-logo.jpg"></a>
+          </div>
+        </div><!-- /.navbar-header -->
+
+        <!-- The navigation links. -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li><a href="/index.html">About me<span class="hidden-sm hidden-xs"></span></a></li>
+
+            <!-- bigdata -->
+            <li class="dropdown">
+              <a href="/bigdata" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">BigData <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                <li><a href="/bigdata/impala.html"><strong>Impala</strong></a></li>
+                <li class="divider"></li>
+                <li><a href="/bigdata/carbondata.html" class="active"><strong>CarbonData</strong></a></li>
+				<li class="divider"></li>
+				<li><a href="/bigdata/spark.html"><strong>Spark</strong></a></li>
+              </ul>
+            </li>
+
+            <!-- ai -->
+            <li class="dropdown active">
+              <a href="/ai" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">AI <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+                <li><a href="/ai/petuum.html"><strong>Petuum</strong></a></li>
+		        <li class="divider"></li>
+                <li><a href="/ai/mxnet.html"><strong>Mxnet</strong></a></li>
+				<li class="divider"></li>
+				<li><a href="/ai/tensorflow.html"><strong>Tensorflow</strong></a></li>
+				<li class="divider"></li>
+				<li><a href="/ai/paddle.html"><strong>Paddle</strong></a></li>
+              </ul>
+            </li>
+
+            <!-- others -->
+            <li class="dropdown">
+              <a href="/others" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Others <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">                
+                <li><a href="/others/blockchain.html"><strong>Blockchain</strong></a></li>
+				<li class="divider"></li>
+                <li><a href="/others/programming.html"><strong>Programming</strong></a></li>
+              </ul>
+            </li>
+          </ul>
+          <form class="navbar-form navbar-right hidden-sm hidden-md" role="search" action="/search-results.html">
+            <div class="form-group">
+              <input type="text" class="form-control" name="q" placeholder="Search all pages">
+            </div>
+            <button type="submit" class="btn btn-default">Search</button>
+          </form>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container -->
+    </nav>
+
+
+    
+
+    <!-- Main content. -->
+    <div class="container">
+      
+      <div class="row">
+  <div class="col-sm-10 col-sm-offset-1">
+    <h1>Paddle 源码阅读</h1>
+
+<h2 id="paddle">安装Paddle</h2>
+<h3 id="paddle-1">下载paddle镜像</h3>
+<pre><code>docker pull paddledev/paddle:cpu-demo-latest ### 启动Paddle容器 ###
+docker run -it paddledev/paddle:cpu-demo-latest
+cd /root/paddle
+</code></pre>
+
+<h2 id="paddle-2">单机运行Paddle</h2>
+
+<pre><code>cd demo/recommendation
+sh run.sh
+</code></pre>
+
+<h2 id="debug-paddle">Debug paddle</h2>
+<p>执行下面命令</p>
+
+<pre><code>export DEBUGGER="gdb --args"
+cd demo/recommendation
+sh run.sh 如果没有安装gdb，执行命令
+apt-get install gdb
+</code></pre>
+
+<p>分布式运行可以去节点上通过gdb –pid命令debug</p>
+
+<h2 id="section">分布式运行</h2>
+<h3 id="section-1">准备环境</h3>
+<p>安装sshd:</p>
+
+<pre><code>apt-get install openssh-server
+/etc/init.d/ssh start
+ssh-keygen -t rsa
+</code></pre>
+
+<p>运行另一个paddle容器并准备ssh环境</p>
+
+<pre><code>docker run -it paddledev/paddle:cpu-demo-latest
+apt-get install openssh-server
+/etc/init.d/ssh start
+ssh-keygen -t rsa
+</code></pre>
+
+<p>把两个容器的key加入到~/.ssh/authorized_keys</p>
+
+<h3 id="paddle-3">启动分布式paddle</h3>
+<pre><code>cd paddle/scripts/cluster_train 修改conf.py
+
+HOSTS = [
+    "root@172.17.0.7",
+    "root@172.17.0.8",
+    ]
+export PATH_TO_LOCAL_WORKSPACE=/root/paddle/demo/recommendation
+sh run.sh
+</code></pre>
+
+<p>root@172.17.0.7上的启动命令是：</p>
+
+<pre><code>[root@172.17.0.7] run: cd /home/paddle/JOB20160831115853; GLOG_logtostderr=0 GLOG_log_dir="./log" nohup paddle pserver  --num_gradient_servers=2 --nics=eth0 --port=7164 --ports_num=2 --ports_num_for_sparse=2 --comment=paddle_process_by_paddle &gt; ./log/server.log 2&gt;&amp;1 &lt; /dev/null &amp;
+[root@172.17.0.7] run: cd /home/paddle/JOB20160831115853; GLOG_logtostderr=0 GLOG_log_dir="./log" nohup paddle train  --num_gradient_servers=2 --nics=eth0 --port=7164 --ports_num=2 --comment=paddle_process_by_paddle --pservers=172.17.0.7,172.17.0.8  --ports_num_for_sparse=2 --config=./trainer_config.py --trainer_count=4 --use_gpu=0 --num_passes=10 --save_dir=./output --log_period=50 --dot_period=10 --saving_period=1 --local=0 --trainer_id=0 &gt; ./log/train.log 2&gt;&amp;1 &lt; /dev/null &amp; root@172.17.0.8上的启动命令是：
+
+[root@172.17.0.8] run: cd /home/paddle/JOB20160831115853; GLOG_logtostderr=0 GLOG_log_dir="./log" nohup paddle pserver  --num_gradient_servers=2 --nics=eth0 --port=7164 --ports_num=2 --ports_num_for_sparse=2 --comment=paddle_process_by_paddle &gt; ./log/server.log 2&gt;&amp;1 &lt; /dev/null &amp;
+[root@172.17.0.8] run: cd /home/paddle/JOB20160831115853; GLOG_logtostderr=0 GLOG_log_dir="./log" nohup paddle train  --num_gradient_servers=2 --nics=eth0 --port=7164 --ports_num=2 --comment=paddle_process_by_paddle --pservers=172.17.0.7,172.17.0.8  --ports_num_for_sparse=2 --config=./trainer_config.py --trainer_count=4 --use_gpu=0 --num_passes=10 --save_dir=./output --log_period=50 --dot_period=10 --saving_period=1 --local=0 --trainer_id=1 &gt; ./log/train.log 2&gt;&amp;1 &lt; /dev/null &amp;
+</code></pre>
+
+<p><img src="images/paddle.jpg" alt="" /></p>
+
+<p>Paddle的架构如上图所示，paddle在每台节点启动PServer和Trainer的两个进程。</p>
+<h3 id="pserver">PServer进程</h3>
+
+<p>PServer进程：入口paddle/pserver/ParameterServer2Main.cpp</p>
+
+<p>在paddle/pserver/ParameterServer2Main.cpp:34看到启动ParameterServer2的数量</p>
+
+<pre><code>int numPorts = FLAGS_ports_num + FLAGS_ports_num_for_sparse;
+</code></pre>
+
+<p>例子中ports_num + ports_num_for_sparse=4</p>
+
+<p><img src="images/pserver.jpg" alt="" /></p>
+
+<p>ParameterServer2类继承ProtoServer类继承SocketServer。并在paddle/pserver/LightNetwork.cpp:191 SocketServer::tcpServer会启动tcpserver，接收客户端连接，每个连接创建SocketWorker线程类。SocketWorker类中的channe负责网络收发，并调用handleRequest()处理请求，handleRequest中根据请求的funcName调用相应的函数。主要函数入口有ParameterServer2类的sendParameter()和doOperation()。sendParameter()的作用是处理非同步的请求，如SET_PARAM，GET_PARAM，ASYNC_SGD，ADD_GRADIENT，AVERAGE_PARAMETER。doOperation()的主要作用是处理sync-sgd。</p>
+
+<p>sync-sgd时，客户端通过controller线程发送op_SGD 命令到PServer，然后立即发送sendParameter请求，PServer端通过doOperation()和sendParameter()调用完成sync-sgd的梯度合并和优化。</p>
+
+<pre><code>      | 区别 --------- | ------------- sync-sgd  | Client通过controller和所有pservers建立连接，传输数据需要barrier同步，发送和merge梯度都是以block为单位，节省网络开销 async-sgd | Client不同pservers的连接不需要barrier同步，梯度立即发送
+</code></pre>
+
+<p>SocketWorker类有2个成员变量，channel负责网络收发，server负责处理请求。</p>
+
+<pre><code>std::unique_ptr&lt;SocketChannel&gt; channel_;
+SocketServer* server_;
+</code></pre>
+
+<h3 id="trainer">Trainer进程</h3>
+<p>主线程的堆栈</p>
+
+<pre><code>Thread 1 (Thread 0x7f60c34f4780 (LWP 1893)):
+#0  sem_wait () at ../nptl/sysdeps/unix/sysv/linux/x86_64/sem_wait.S:85
+#1  0x0000000000619ff3 in wait (this=&lt;optimized out&gt;) at /root/paddle/paddle/utils/Locks.h:144
+#2  waitOutArgsReady ()
+at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.h:367
+#3  paddle::MultiGradientMachine::getOutArgs ()
+at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.cpp:357
+#4  0x0000000000618a3e in paddle::MultiGradientMachine::forwardBackward()
+at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.cpp:291
+#5  0x000000000066205c in paddle::TrainerInternal::forwardBackwardBatch()
+at /root/paddle/paddle/trainer/TrainerInternal.cpp:299
+#6  0x0000000000662ab7 in paddle::TrainerInternal::trainOneBatch ()
+at /root/paddle/paddle/trainer/TrainerInternal.cpp:117
+#7  0x000000000065da30 in paddle::Trainer::trainOnePass ()
+at /root/paddle/paddle/trainer/Trainer.cpp:434
+#8  0x0000000000661247 in paddle::Trainer::train ()
+at /root/paddle/paddle/trainer/Trainer.cpp:280
+#9  0x000000000050b083 in main ()
+at /root/paddle/paddle/trainer/TrainerMain.cpp:100
+</code></pre>
+
+<p>主线程初始化会启动FLAGS_trainer_count个TrainerThread，例子中是4个paddle/gserver/gradientmachines/MultiGradientMachine.cpp:134</p>
+
+<p>TrainerThread负责真正的计算，主线程通过getOutArgs()等待计算结果。</p>
+
+<p>主线程会设置updateCallback，在回调中向PServer更新参数。</p>
+
+<p>更新参数是异步的，主线程中会创建SparseRemoteParameterUpdater和RemoteParameterUpdater两个线程。跟启动参数中ports_num+ports_num_for_sparse对应。可以看出Sparse和非Sparse是分开的。</p>
+
+<p>RemoteParameterUpdater类和SparseRemoteParameterUpdater类中创建ParameterClient2类负责网络收发。</p>
+
+<p><img src="images/parameterClient.jpg" alt="" /></p>
+
+<p>BaseClient类中启动一组接收线程，接收队列，发送线程，发送队列，数量等于实际PServer数量。</p>
+
+<pre><code>/// nodes * ports that means the number of real pservers
+int serviceNum_;
+</code></pre>
+
+<p>假如有n个PServer进程，sendParameter()把参数或数据放到n个sendJobQueue_里面，n个sendThread_从各自的sendJobQueue_取出并同时发送到n个PServer。避免网络拥塞。以下是代码中原话，作者假设pserver最多就几百个，这种基于线程的并行方式是有效的，对于更大的集群，可能会有问题。</p>
+
+<pre><code>/**
+ * threads num for managing all services. Normally the
+ * number of pservers are relatively less than several
+ * hundreds so that using thread-based parallelization
+ * can benifit traffic performance and pserver's sgd
+ * optimization performance.
+ */
+int threadNum_;
+</code></pre>
+
+<p>ParameterUpdaterCreators根据配置文件创建相应的ParameterUpdater。</p>
+
+<p>SgdThreadUpdater，SgdLocalUpdater，SgdUpdaterWithCpuAverager是local的ParameterUpdater，不需要连接PServer。其他的是remote的ParameterUpdater需要连接PServer。</p>
+
+<p>在Trainer::init paddle/trainer/Trainer.cpp:240中，初始化ParameterUpdater，
+trainerInternal_.getParameterUpdater()-&gt;init(parameters);</p>
+
+<p>Local的ParameterUpdater类在forward()前调用startBatch()，在backward后调用finishBatch()，在forward()和backward()中会多次调用update()更新weight。ParameterUpdater类的startBatch()， finishBatch()，update()主要调用ParameterOptimizer的同名函数。</p>
+
+<p>Remote的ParameterUpdater类主要区别在于finishBatch()中会跟PServer更新参数。</p>
+
+<p>SparseRemoteParameterUpdater所有参数都在PServer端，所以不需要localUpdater_，它的updateImpl实现是空的。在forward()前要从PServer拉weight,每次只拉需要的部分，所以参数可以非常大。在finishBatch()中，调用sendAndReceiveParameter发送delta到PServer，并拉取最新的参数。controller()线程函数中通过PSERVER_OP_START_PASS，PSERVER_OP_SGD，PSERVER_OP_FINISH_PASS操作命令在服务器端更新参数。</p>
+
+<p>ConcurrentRemoteParameterUpdater在RemoteParameterUpdater基础上加了一个优化：</p>
+
+<pre><code>pipeline device-to-host copy and host-to-network to hide network latency in backward stage.
+</code></pre>
+
+<p>并且在不同的线程里面发送和接收。参数可以在本地也可以在PServer端，如果在本地通过localUpdater_更新，如果在PServer端通过controllerThread_更新(猜的，不知道对不对？)</p>
+
+<p><img src="images/parameterUpdater.jpg" alt="" /></p>
+
+  </div>
+
+  <div class="col-sm-10 col-sm-offset-1">
+    <!-- Disqus thread and some vertical offset -->
+    <div style="margin-top: 75px; margin-bottom: 50px" id="disqus_thread"></div>
+  </div>
+</div>
+
+    </div><!-- /.container -->
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="/page/js/codetabs.js"></script>
+
+    <!-- Google Analytics -->
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-52545728-1', 'auto');
+      ga('send', 'pageview');
+    </script>
+
+    <!-- Disqus -->
+    <script type="text/javascript">
+    var disqus_shortname = 'stratosphere-eu';
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+  </body>
+</html>

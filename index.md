@@ -1,3 +1,6 @@
+---
+title: "About"
+---
 ## Summary
 
 5 years of experience building scalable high performance data warehouses systems, with expertise in query optimization, vectorized execution and columnar storage format. Strong HW knowledge, good understanding of the effects imposed by the system at all levels (CPU, memory, network, I/O, OS, queuing effect, storage, etc.), optimization for multi core. Strong programming skills in C++, Java, Python, Golang, Javascript, HQL, PL/SQL and other script language. Extensive experience with root causing and quantifying performance issues across the stack.

@@ -132,7 +132,9 @@ apt-get install gdb
 <p>分布式运行可以去节点上通过gdb –pid命令debug</p>
 
 <h2 id="section">分布式运行</h2>
+
 <h3 id="section-1">准备环境</h3>
+
 <p>安装sshd:</p>
 
 <pre><code>apt-get install openssh-server
@@ -151,9 +153,12 @@ ssh-keygen -t rsa
 <p>把两个容器的key加入到~/.ssh/authorized_keys</p>
 
 <h3 id="paddle-4">启动分布式paddle</h3>
-<pre><code>cd paddle/scripts/cluster_train 修改conf.py
+<pre><code>cd paddle/scripts/cluster_train
+</code></pre>
 
-HOSTS = [
+<p>修改conf.py</p>
+
+<pre><code>HOSTS = [
     "root@172.17.0.7",
     "root@172.17.0.8",
     ]
@@ -173,6 +178,7 @@ sh run.sh
 <p><img src="images/paddle.jpg" alt="" /></p>
 
 <p>Paddle的架构如上图所示，paddle在每台节点启动PServer和Trainer的两个进程。</p>
+
 <h3 id="pserver">PServer进程</h3>
 
 <p>PServer进程：入口paddle/pserver/ParameterServer2Main.cpp</p>
@@ -190,90 +196,91 @@ sh run.sh
 
 <p>sync-sgd时，客户端通过controller线程发送op_SGD 命令到PServer，然后立即发送sendParameter请求，PServer端通过doOperation()和sendParameter()调用完成sync-sgd的梯度合并和优化。</p>
 
-<pre><code>      | 区别 --------- | ------------- sync-sgd  | Client通过controller和所有pservers建立连接，传输数据需要barrier同步，发送和merge梯度都是以block为单位，节省网络开销 async-sgd | Client不同pservers的连接不需要barrier同步，梯度立即发送
-</code></pre>
+<table>
+<tbody>
+<tr><td>并行方式</td><td>区别<td><tr>
+<tr><td>sync-sgd</td><td>Client通过controller和所有pservers建立连接，传输数据需要barrier同步，发送和merge梯度都是以block为单位，节省网络开销<td><tr>
+<tr><td>async-sgd</td><td>Client不同pservers的连接不需要barrie同步，梯度立即发送<td><tr>
+&lt;/tbody&gt;
+&lt;/table&gt;
 
-<p>SocketWorker类有2个成员变量，channel负责网络收发，server负责处理请求。</p>
+SocketWorker类有2个成员变量，channel负责网络收发，server负责处理请求。
 
-<pre><code>std::unique_ptr&lt;SocketChannel&gt; channel_;
-SocketServer* server_;
-</code></pre>
+	std::unique_ptr<SocketChannel> channel_;
+	SocketServer* server_;
 
-<h3 id="trainer">Trainer进程</h3>
-<p>主线程的堆栈</p>
+### Trainer进程 ###
+主线程的堆栈
 
-<pre><code>Thread 1 (Thread 0x7f60c34f4780 (LWP 1893)):
-#0  sem_wait () at ../nptl/sysdeps/unix/sysv/linux/x86_64/sem_wait.S:85
-#1  0x0000000000619ff3 in wait (this=&lt;optimized out&gt;) at /root/paddle/paddle/utils/Locks.h:144
-#2  waitOutArgsReady ()
-at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.h:367
-#3  paddle::MultiGradientMachine::getOutArgs ()
-at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.cpp:357
-#4  0x0000000000618a3e in paddle::MultiGradientMachine::forwardBackward()
-at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.cpp:291
-#5  0x000000000066205c in paddle::TrainerInternal::forwardBackwardBatch()
-at /root/paddle/paddle/trainer/TrainerInternal.cpp:299
-#6  0x0000000000662ab7 in paddle::TrainerInternal::trainOneBatch ()
-at /root/paddle/paddle/trainer/TrainerInternal.cpp:117
-#7  0x000000000065da30 in paddle::Trainer::trainOnePass ()
-at /root/paddle/paddle/trainer/Trainer.cpp:434
-#8  0x0000000000661247 in paddle::Trainer::train ()
-at /root/paddle/paddle/trainer/Trainer.cpp:280
-#9  0x000000000050b083 in main ()
-at /root/paddle/paddle/trainer/TrainerMain.cpp:100
-</code></pre>
+	Thread 1 (Thread 0x7f60c34f4780 (LWP 1893)):
+	#0  sem_wait () at ../nptl/sysdeps/unix/sysv/linux/x86_64/sem_wait.S:85
+	#1  0x0000000000619ff3 in wait (this=<optimized out="">) at /root/paddle/paddle/utils/Locks.h:144
+	#2  waitOutArgsReady ()
+	at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.h:367
+	#3  paddle::MultiGradientMachine::getOutArgs ()
+	at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.cpp:357
+	#4  0x0000000000618a3e in paddle::MultiGradientMachine::forwardBackward()
+	at /root/paddle/paddle/gserver/gradientmachines/MultiGradientMachine.cpp:291
+	#5  0x000000000066205c in paddle::TrainerInternal::forwardBackwardBatch()
+	at /root/paddle/paddle/trainer/TrainerInternal.cpp:299
+	#6  0x0000000000662ab7 in paddle::TrainerInternal::trainOneBatch ()
+	at /root/paddle/paddle/trainer/TrainerInternal.cpp:117
+	#7  0x000000000065da30 in paddle::Trainer::trainOnePass ()
+	at /root/paddle/paddle/trainer/Trainer.cpp:434
+	#8  0x0000000000661247 in paddle::Trainer::train ()
+	at /root/paddle/paddle/trainer/Trainer.cpp:280
+	#9  0x000000000050b083 in main ()
+	at /root/paddle/paddle/trainer/TrainerMain.cpp:100
 
-<p>主线程初始化会启动FLAGS_trainer_count个TrainerThread，例子中是4个paddle/gserver/gradientmachines/MultiGradientMachine.cpp:134</p>
+主线程初始化会启动FLAGS_trainer_count个TrainerThread，例子中是4个paddle/gserver/gradientmachines/MultiGradientMachine.cpp:134
 
-<p>TrainerThread负责真正的计算，主线程通过getOutArgs()等待计算结果。</p>
+TrainerThread负责真正的计算，主线程通过getOutArgs()等待计算结果。
 
-<p>主线程会设置updateCallback，在回调中向PServer更新参数。</p>
+主线程会设置updateCallback，在回调中向PServer更新参数。
 
-<p>更新参数是异步的，主线程中会创建SparseRemoteParameterUpdater和RemoteParameterUpdater两个线程。跟启动参数中ports_num+ports_num_for_sparse对应。可以看出Sparse和非Sparse是分开的。</p>
+更新参数是异步的，主线程中会创建SparseRemoteParameterUpdater和RemoteParameterUpdater两个线程。跟启动参数中ports_num+ports_num_for_sparse对应。可以看出Sparse和非Sparse是分开的。
 
-<p>RemoteParameterUpdater类和SparseRemoteParameterUpdater类中创建ParameterClient2类负责网络收发。</p>
+RemoteParameterUpdater类和SparseRemoteParameterUpdater类中创建ParameterClient2类负责网络收发。
 
-<p><img src="images/parameterClient.jpg" alt="" /></p>
+![](images/parameterClient.jpg)
 
-<p>BaseClient类中启动一组接收线程，接收队列，发送线程，发送队列，数量等于实际PServer数量。</p>
+BaseClient类中启动一组接收线程，接收队列，发送线程，发送队列，数量等于实际PServer数量。
 
-<pre><code>/// nodes * ports that means the number of real pservers
-int serviceNum_;
-</code></pre>
+	/// nodes * ports that means the number of real pservers
+	int serviceNum_;
 
-<p>假如有n个PServer进程，sendParameter()把参数或数据放到n个sendJobQueue_里面，n个sendThread_从各自的sendJobQueue_取出并同时发送到n个PServer。避免网络拥塞。以下是代码中原话，作者假设pserver最多就几百个，这种基于线程的并行方式是有效的，对于更大的集群，可能会有问题。</p>
+假如有n个PServer进程，sendParameter()把参数或数据放到n个sendJobQueue_里面，n个sendThread_从各自的sendJobQueue_取出并同时发送到n个PServer。避免网络拥塞。以下是代码中原话，作者假设pserver最多就几百个，这种基于线程的并行方式是有效的，对于更大的集群，可能会有问题。
 
-<pre><code>/**
- * threads num for managing all services. Normally the
- * number of pservers are relatively less than several
- * hundreds so that using thread-based parallelization
- * can benifit traffic performance and pserver's sgd
- * optimization performance.
- */
-int threadNum_;
-</code></pre>
+	/**
+	 * threads num for managing all services. Normally the
+	 * number of pservers are relatively less than several
+	 * hundreds so that using thread-based parallelization
+	 * can benifit traffic performance and pserver's sgd
+	 * optimization performance.
+	 */
+	int threadNum_;
 
-<p>ParameterUpdaterCreators根据配置文件创建相应的ParameterUpdater。</p>
+ParameterUpdaterCreators根据配置文件创建相应的ParameterUpdater。
 
-<p>SgdThreadUpdater，SgdLocalUpdater，SgdUpdaterWithCpuAverager是local的ParameterUpdater，不需要连接PServer。其他的是remote的ParameterUpdater需要连接PServer。</p>
+SgdThreadUpdater，SgdLocalUpdater，SgdUpdaterWithCpuAverager是local的ParameterUpdater，不需要连接PServer。其他的是remote的ParameterUpdater需要连接PServer。
 
-<p>在Trainer::init paddle/trainer/Trainer.cpp:240中，初始化ParameterUpdater，
-trainerInternal_.getParameterUpdater()-&gt;init(parameters);</p>
+在Trainer::init paddle/trainer/Trainer.cpp:240中，初始化ParameterUpdater，
+trainerInternal_.getParameterUpdater()-&gt;init(parameters);
 
-<p>Local的ParameterUpdater类在forward()前调用startBatch()，在backward后调用finishBatch()，在forward()和backward()中会多次调用update()更新weight。ParameterUpdater类的startBatch()， finishBatch()，update()主要调用ParameterOptimizer的同名函数。</p>
+Local的ParameterUpdater类在forward()前调用startBatch()，在backward后调用finishBatch()，在forward()和backward()中会多次调用update()更新weight。ParameterUpdater类的startBatch()， finishBatch()，update()主要调用ParameterOptimizer的同名函数。
 
-<p>Remote的ParameterUpdater类主要区别在于finishBatch()中会跟PServer更新参数。</p>
+Remote的ParameterUpdater类主要区别在于finishBatch()中会跟PServer更新参数。
 
-<p>SparseRemoteParameterUpdater所有参数都在PServer端，所以不需要localUpdater_，它的updateImpl实现是空的。在forward()前要从PServer拉weight,每次只拉需要的部分，所以参数可以非常大。在finishBatch()中，调用sendAndReceiveParameter发送delta到PServer，并拉取最新的参数。controller()线程函数中通过PSERVER_OP_START_PASS，PSERVER_OP_SGD，PSERVER_OP_FINISH_PASS操作命令在服务器端更新参数。</p>
+SparseRemoteParameterUpdater所有参数都在PServer端，所以不需要localUpdater_，它的updateImpl实现是空的。在forward()前要从PServer拉weight,每次只拉需要的部分，所以参数可以非常大。在finishBatch()中，调用sendAndReceiveParameter发送delta到PServer，并拉取最新的参数。controller()线程函数中通过PSERVER_OP_START_PASS，PSERVER_OP_SGD，PSERVER_OP_FINISH_PASS操作命令在服务器端更新参数。
 
-<p>ConcurrentRemoteParameterUpdater在RemoteParameterUpdater基础上加了一个优化：</p>
+ConcurrentRemoteParameterUpdater在RemoteParameterUpdater基础上加了一个优化：
 
-<pre><code>pipeline device-to-host copy and host-to-network to hide network latency in backward stage.
-</code></pre>
+	pipeline device-to-host copy and host-to-network to hide network latency in backward stage.
 
-<p>并且在不同的线程里面发送和接收。参数可以在本地也可以在PServer端，如果在本地通过localUpdater_更新，如果在PServer端通过controllerThread_更新(猜的，不知道对不对？)</p>
+并且在不同的线程里面发送和接收。参数可以在本地也可以在PServer端，如果在本地通过localUpdater_更新，如果在PServer端通过controllerThread_更新(猜的，不知道对不对？)
 
-<p><img src="images/parameterUpdater.jpg" alt="" /></p>
+![](images/parameterUpdater.jpg)
+</optimized></SocketChannel></tr></td></td></tr></tr></td></td></tr></tr></td></td></tr></tbody></table>
 
   </div>
 

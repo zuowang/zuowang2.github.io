@@ -29,8 +29,10 @@ title: "Paddle 源码阅读"
 
 分布式运行可以去节点上通过gdb --pid命令debug
 
-## 分布式运行 
-### 准备环境 ###
+## 分布式运行
+
+### 准备环境
+
 安装sshd:
 
 	apt-get install openssh-server
@@ -46,8 +48,9 @@ title: "Paddle 源码阅读"
 
 把两个容器的key加入到~/.ssh/authorized_keys
 
-### 启动分布式paddle ###
+### 启动分布式paddle
 	cd paddle/scripts/cluster_train
+
 修改conf.py
 
 	HOSTS = [
@@ -69,7 +72,8 @@ root@172.17.0.8上的启动命令是：
 ![](images/paddle.jpg)
 
 Paddle的架构如上图所示，paddle在每台节点启动PServer和Trainer的两个进程。
-### PServer进程 ###
+
+### PServer进程
 
 PServer进程：入口paddle/pserver/ParameterServer2Main.cpp
 
@@ -85,11 +89,13 @@ ParameterServer2类继承ProtoServer类继承SocketServer。并在paddle/pserver
 
 sync-sgd时，客户端通过controller线程发送op_SGD 命令到PServer，然后立即发送sendParameter请求，PServer端通过doOperation()和sendParameter()调用完成sync-sgd的梯度合并和优化。
 
-          | 区别
---------- | -------------
-sync-sgd  | Client通过controller和所有pservers建立连接，传输数据需要barrier同步，发送和merge梯度都是以block为单位，节省网络开销
-async-sgd | Client不同pservers的连接不需要barrier同步，梯度立即发送
-
+<table>
+<tbody>
+<tr><td>并行方式</td><td>区别<td><tr>
+<tr><td>sync-sgd</td><td>Client通过controller和所有pservers建立连接，传输数据需要barrier同步，发送和merge梯度都是以block为单位，节省网络开销<td><tr>
+<tr><td>async-sgd</td><td>Client不同pservers的连接不需要barrie同步，梯度立即发送<td><tr>
+</tbody>
+</table>
 
 SocketWorker类有2个成员变量，channel负责网络收发，server负责处理请求。
 

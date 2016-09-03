@@ -89,13 +89,9 @@ ParameterServer2类继承ProtoServer类继承SocketServer。并在paddle/pserver
 
 sync-sgd时，客户端通过controller线程发送op_SGD 命令到PServer，然后立即发送sendParameter请求，PServer端通过doOperation()和sendParameter()调用完成sync-sgd的梯度合并和优化。
 
-<table>
-<tbody>
-<tr><td>并行方式</td><td>区别<td><tr>
-<tr><td>sync-sgd</td><td>Client通过controller和所有pservers建立连接，传输数据需要barrier同步，发送和merge梯度都是以block为单位，节省网络开销<td><tr>
-<tr><td>async-sgd</td><td>Client不同pservers的连接不需要barrie同步，梯度立即发送<td><tr>
-</tbody>
-</table>
+1. sync-sgd: Client通过controller和所有pservers建立连接，传输数据需要barrier同步，发送和merge梯度都是以block为单位，节省网络开销
+2. async-sgd: Client不同pservers的连接不需要barrie同步，梯度立即发送
+
 
 SocketWorker类有2个成员变量，channel负责网络收发，server负责处理请求。
 
